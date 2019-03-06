@@ -21,6 +21,8 @@
 #define SERIALENABLE 1
 // Troubleshoot/Debug Flag
 #define TROUBLESHOOT 0
+// Debug Delay
+#define DEBUGDELAY 500
 // Number of strips
 #define STRIPS 1
 // Default PIN for default strip
@@ -37,6 +39,8 @@
 #define RGB_SIZE 3
 // Size of Palette Array
 #define PALETTE_SIZE 32
+// Initial Fade State (0 = no fade, > 0, fade on)
+#define FADESTATE 0
 
 // Colors
 #define GOLD 0
@@ -50,12 +54,8 @@
 #define DARKOLIVEGREEN 8
 #define BLUEVIOLET 9
 #define DARKVIOLET 10
-#define DARKORCHID 11
-#define DARKMAGENTA 12
-#define PURPLE 13
-#define INDIGO 14
-#define LIGHTBLUE 15
-#define LIGHTRED 16
+#define WHITE 11
+#define GREEN 12
 
 // Command Registers
 #define R_SHOW 0
@@ -75,6 +75,11 @@
 #define R_PALETTE_W 14
 #define R_MAXPAL 15
 #define R_STATUS 16
+#define R_DEBUG 17
+#define R_FADE 18
+#define R_COLORTIME 19
+#define R_COLORTIMEMULT 20
+#define R_PERCENTCOLOR 21
 
 /////////////////////////
 // Classes
@@ -98,15 +103,15 @@ Adafruit_NeoPixel strips[STRIPS];
 // Strip Defaults
 int stripDefaults[][2] = { { PIXELS, PIN } };
 
-// gold, orange, darkorange, red, crimson, yellow, olive, olivedrab, darkolivegreen, lightred, white
-int colors[PALETTE_SIZE][RGB_SIZE] = { {255,215,0}, {255,165,0}, {255,140,0}, {255,0,0}, {220,20,60}, {255,255,0}, {128,128,0}, {107,142,35}, {85,107,47}, { 0, 0, 128 }, { 128, 0, 0 }, { 255, 255, 255 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
-int totalColors = 11;
+// gold, orange, darkorange, red, crimson, yellow, olive, olivedrab, darkolivegreen, blueviolet, lightred, white, green
+int colors[PALETTE_SIZE][RGB_SIZE] = { {255,215,0}, {255,165,0}, {255,140,0}, {255,0,0}, {220,20,60}, {255,255,0}, {128,128,0}, {107,142,35}, {85,107,47}, { 0, 0, 128 }, { 128, 0, 0 }, { 255, 255, 255 }, { 0, 255, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+int totalColors = 13;
 
 // Pixel Pattern Buffer
-int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { { colors[RED] }, { colors[RED] }, { colors[RED] }, { colors[RED] }, { colors[RED] } } };
+int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { { colors[GOLD] }, { colors[OLIVE] }, { colors[DARKOLIVEGREEN] }, { colors[OLIVEDRAB] }, { colors[GREEN] } } };
 
 // Scratch Pixel & Default Pixels
-int rgbPixel[RGB_SIZE] = { colors[RED] };
+int rgbPixel[RGB_SIZE] = { colors[GREEN] };
 // Off Pixel
 int offPixel[RGB_SIZE] = { 0, 0, 0 };
 // Palette RGB
@@ -117,8 +122,9 @@ int paletteIndex = 0;
 // Brightness Max
 int maxBrightness = MAX;
 
+long maxColorTimeMultiplier = 100000;
 // MaxColor Time (in ms)
-long maxColorTime = 300000;
+long maxColorTime = (3 * maxColorTimeMultiplier);
 // Color Timer
 long timeInColor = 0;
 
@@ -126,11 +132,13 @@ long timeInColor = 0;
 int fadeStep = -1;
 // Fade Delay
 int fadeDelay = 100;
+// Fade State (on or off)
+int fadeState = FADESTATE;
 
 // Global Mix down Color
 uint32_t mixedColor;
 // Current Mixed Color
-int currentColor = RED;
+int currentColor = GREEN;
 // Current Strip
 int currentStrip = 0;
 // Current Pixel
@@ -150,6 +158,12 @@ int showLeds = 1;
 
 // Delay Flag
 int Delay = DELAY;
+
+// DebugMode Flag
+int DebugMode = TROUBLESHOOT;
+
+// Initialized Flag
+int initialized = 0;
 
 /////////////////////////
 // Main Loop and Supporting Functions
@@ -171,22 +185,18 @@ void setup() {
   // Seed Randomizer
   randomSeed(analogRead(0));
 
+  // Set Colors
+  oneColor = GREEN;
+  currentColor = GREEN;
+
   // Init Neopixel strips
   for (int index=0; index < STRIPS; ++index)
   {
     strips[index] = Adafruit_NeoPixel(stripDefaults[index][0],stripDefaults[index][1], NEO_GRB + NEO_KHZ800);
     strips[index].begin();
     strips[index].setBrightness(maxBrightness);
-
-    strips[index].show();
+    SetRGBPixels(index,offPixel,0);
   }
-
-  oneColor = RED;
-  currentColor = RED;
-  showLeds = 1;
-
-  for (int index=0; index < STRIPS; ++index)
-    SetPixels(index,currentColor,0);
 }
 
 // *** I2C Recieve Loop
@@ -248,8 +258,7 @@ void i2cReceive(int howManyBytes)
         {
           currentColor = v;
 
-          for (int index=0; index < STRIPS; ++index)
-            SetPixels(index,currentColor,0);
+          TurnOnStrips(currentColor);
         }
       }
       break;
@@ -262,8 +271,7 @@ void i2cReceive(int howManyBytes)
           paletteIndex = v;
       }
       break;
-      case R_PALETTE_R:
-      {
+      case R_PALETTE_R: {
         paletteRGB[0] = v;
       }
       break;
@@ -282,8 +290,7 @@ void i2cReceive(int howManyBytes)
         }
       }
       break;
-      case R_MAXPAL:
-      {
+      case R_MAXPAL: {
         if (v <= PALETTE_SIZE)
         {
           totalColors = v;
@@ -306,22 +313,32 @@ void i2cReceive(int howManyBytes)
         Serial.println(showLeds,DEC);
         Serial.print("Time In Color  : ");
         Serial.println(timeInColor,DEC);
+        Serial.print("maxColorTimeM  : ");
+        Serial.println(maxColorTimeMultiplier,DEC);
         Serial.print("Delay          : ");
         Serial.println(Delay,DEC);
         Serial.print("RGB Size       : ");
         Serial.println(RGB_SIZE,DEC);
+        Serial.print("Fade State     : ");
+        Serial.println(fadeState,DEC);
         Serial.print("Fade Step      : ");
         Serial.println(fadeStep,DEC);
         Serial.print("Fade Delay     : ");
         Serial.println(fadeDelay,DEC);
+        Serial.print("Percent Color  : ");
+        Serial.println(percentColor,DEC);
         Serial.print("LED Toggle     : ");
         Serial.println(ledToggle,DEC);
         Serial.print("Color Count    : ");
         Serial.println(totalColors,DEC);
-        Serial.print("Troubleshoot   : ");
-        Serial.println(TROUBLESHOOT,DEC);
+        Serial.print("DebugMode      : ");
+        Serial.println(DebugMode,DEC);
         Serial.print("Serial Enable  : ");
         Serial.println(SERIALENABLE,DEC);
+        Serial.print("maxColorTime   : ");
+        Serial.println(maxColorTime,DEC);
+        Serial.print("Initialized    : ");
+        Serial.println(initialized,DEC);
         
         for (int index=0; index < STRIPS; ++index)
         {
@@ -334,19 +351,37 @@ void i2cReceive(int howManyBytes)
         // Serial.println(,);
       }
       break;
+      case R_DEBUG: {
+        DebugMode = v;
+      }
+      break;
+      case R_FADE: {
+        fadeState = v;
+      }
+      break;
+      case R_COLORTIME: {
+        maxColorTime = abs(v * maxColorTimeMultiplier);
+      }
+      break;
+      case R_COLORTIMEMULT: {
+        maxColorTimeMultiplier = abs(v * 1000);
+      }
+      break;
+      case R_PERCENTCOLOR: {
+        percentColor = abs(v);
+      }
+      break;
     }
   }
 }
 
 // Serial Msg Helper
-void SendMsg(String msg)
-{
+void SendMsg(String msg) {
   Serial.println(msg);
 }
 
 // Debug Message Helper
-void DebugMsg(String msg)
-{
+void DebugMsg(String msg) {
   if (TROUBLESHOOT > 0 && SERIALENABLE > 0)
   {
     SendMsg(msg);
@@ -356,27 +391,23 @@ void DebugMsg(String msg)
 // *** Pixel Helper Functions
 
 // Turn Off Strip Pixels
-void TurnOffStrip(int stripIndex)
-{
-  SetRGBPixels(stripIndex,offPixel,0); 
+void TurnOffStrip(int stripIndex) {
+  SetRGBPixels(stripIndex,offPixel,0);
 }
 
 // Turn Off All Strips
-void TurnOffStrips()
-{
+void TurnOffStrips() {
   for (int index=0; index < STRIPS; ++index)
     TurnOffStrip(index);
 }
 
 // Turn On Strip Pixels With Given Color
-void TurnOnStrip(int stripIndex, int color)
-{
+void TurnOnStrip(int stripIndex, int color) {
   SetPixels(stripIndex,color,0);
 }
 
 // Turn On All Strips
-void TurnOnStrips(int color)
-{
+void TurnOnStrips(int color) {
   for (int index=0; index < STRIPS; ++index)
     TurnOnStrip(index,color);
 }
@@ -384,20 +415,17 @@ void TurnOnStrips(int color)
 // *** Set Pixel Functions ***
 
 // Show New Settings On Strip
-void Show(int stripIndex)
-{
+void Show(int stripIndex) {
   strips[stripIndex].show();
 }
 
 // Set the Color of a Specific Pixel (w/No Adjust)
-void SetPixel(int stripIndex, int pixelIndex, int color)
-{
+void SetPixel(int stripIndex, int pixelIndex, int color) {
   strips[stripIndex].setPixelColor(pixelIndex,GetColor(colors[color]));
 }
 
 // Set Pixels on A Strip To An RGB/W Value (w/0 Percent Adjust)
-void SetRGBPixels(int strip, int rgbColor[], int wait)
-{
+void SetRGBPixels(int strip, int rgbColor[], int wait) {
   uint32_t c = GetColor(rgbColor);
   
   for (uint16_t index=0; index < strips[strip].numPixels(); ++index)
@@ -412,8 +440,7 @@ void SetRGBPixels(int strip, int rgbColor[], int wait)
 }
 
 // Set Pixels on A Strip (w/Percent Adjust)
-void SetPixels(int strip, int color, int wait)
-{
+void SetPixels(int strip, int color, int wait) {
   uint32_t c = AdjustColor(color,percentColor);
   
   for (uint16_t index=0; index < strips[strip].numPixels(); ++index)
@@ -428,8 +455,7 @@ void SetPixels(int strip, int color, int wait)
 }
 
 // Mixdown RGB/W Values
-uint32_t GetColor(int pixel[RGB_SIZE])
-{
+uint32_t GetColor(int pixel[RGB_SIZE]) {
   uint32_t color = 0;
   
   if (RGB_SIZE == 3)
@@ -445,8 +471,7 @@ uint32_t GetColor(int pixel[RGB_SIZE])
 }
 
 // Copy Pixel RGB/W Values From Source pixel to dest pixel
-void CopyPixel(int dst[RGB_SIZE],int src[RGB_SIZE])
-{
+void CopyPixel(int dst[RGB_SIZE],int src[RGB_SIZE]) {
   for(int index=0; index < RGB_SIZE; ++index)
     dst[index] = src[index];
 }
@@ -456,14 +481,12 @@ void CopyPixel(int dst[RGB_SIZE],int src[RGB_SIZE])
 // *** Step/Fade Helpers
 
 // Toggle Step
-int ToggleStep(int stepValue)
-{
+int ToggleStep(int stepValue) {
   return (stepValue < 0 ? abs(stepValue) : (stepValue * -1));
 }
 
 // Adjust Color By Percent (0 thru 100, 0 = no color, 100 = current color)
-uint32_t AdjustColor(int color, int percent)
-{
+uint32_t AdjustColor(int color, int percent) {
   float p = (float(percent) / 100.0);
   int pixelColor[RGB_SIZE];
   int tmpColor[RGB_SIZE];
@@ -480,8 +503,7 @@ uint32_t AdjustColor(int color, int percent)
 }
 
 // Get New Color
-void NewColor()
-{
+void NewColor() {
   if (oneColor < 0)
     currentColor = random(0,totalColors - 1);
   else
@@ -489,15 +511,15 @@ void NewColor()
 }
 
 // Fade Down, then Up
-void Fade()
-{
+void Fade() {
   // Flip fade up/down the color
   if (percentColor <= 0) {
-    fadeStep = ToggleStep(fadeStep);
+    fadeStep = abs(fadeStep);
     percentColor = 0;
+    NewColor();
   }
   else if (percentColor >= 100) {
-    fadeStep = ToggleStep(fadeStep);
+    fadeStep = (fadeStep*-1);
     percentColor = 100;
   }
     
@@ -507,27 +529,18 @@ void Fade()
     SetPixels(index,currentColor,0);
 
   delay(fadeDelay);
-
-  if (percentColor <= 0) {
-    NewColor();
-  }
-    
-  if (percentColor >= 100) {
-    percentColor = 100;    
-    timeInColor = 0;
-  }
 }
 
 /// *** End Change/Fade Helpers
 
-void ToggleLed()
+void ToggleOnBoardLed()
 {
-  if (TROUBLESHOOT) {
+  if (DebugMode) {
     digitalWrite(LED_BUILTIN,ledToggle);
     ledToggle = !ledToggle;
 
     if (showLeds == 0)
-      delay(Delay);
+      delay(DEBUGDELAY);
   }
 }
 
@@ -536,15 +549,23 @@ void ToggleLed()
 /////////////////////////////
 // the loop function runs over and over again forever
 void loop() {
-  if (showLeds) {
-    ToggleLed();
+  ToggleOnBoardLed();
 
-    if (timeInColor > maxColorTime) {
+  if (showLeds) {
+    if (!initialized) {
+      initialized = 1;
+      TurnOnStrips(currentColor);
+    }
+    if (fadeState && timeInColor > maxColorTime) {
       Fade();
+      timeInColor = 0;
     } else {
       delay(Delay);
 
       timeInColor += Delay;
+
+      if (!fadeState && timeInColor > maxColorTime)
+        timeInColor = 0;
     }
   }
 }
