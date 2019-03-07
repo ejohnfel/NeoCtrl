@@ -15,6 +15,19 @@
  */
 
 /////////////////////////
+// Classes
+/////////////////////////
+
+// Strip Class
+//class Strip
+//{
+//  Adafruit_NeoPixel strip;
+//  int pixels;
+//  int pixelColors[];
+    
+//};
+
+/////////////////////////
 // Defines
 /////////////////////////
 // Serial Enable
@@ -37,25 +50,8 @@
 #define DELAY 100
 // RGB Pixel Buffer Size 3 = RGB, 4 = RGBW
 #define RGB_SIZE 3
-// Size of Palette Array
-#define PALETTE_SIZE 32
 // Initial Fade State (0 = no fade, > 0, fade on)
 #define FADESTATE 0
-
-// Colors
-#define GOLD 0
-#define ORANGE 1
-#define DARKORANGE 2
-#define RED 3
-#define CRIMSON 4
-#define YELLOW 5
-#define OLIVE 6
-#define OLIVEDRAB 7
-#define DARKOLIVEGREEN 8
-#define BLUEVIOLET 9
-#define DARKVIOLET 10
-#define WHITE 11
-#define GREEN 12
 
 // Command Registers
 #define R_SHOW 0
@@ -81,18 +77,396 @@
 #define R_COLORTIMEMULT 20
 #define R_PERCENTCOLOR 21
 
-/////////////////////////
-// Classes
-/////////////////////////
+// Palette Color Definitions
 
-// Strip Class
-//class Strip
-//{
-//  Adafruit_NeoPixel strip;
-//  int pixels;
-//  int pixelColors[];
-    
-//};
+#if RGB_SIZE > 3
+  // RGBW Color Definitions
+  #define OFF_RGB   { 0, 0, 0, 0 }
+
+  // index = 3 is white or brightness??? Before using 4 color pixels, check this (and modify "brightness" functions to "SetWhite..." etc...
+  
+  // Pinks
+  #define PINK_RGB            { 255, 192, 203, 128 }
+  #define LIGHTPINK_RGB       { 255, 182, 193, 128 }
+  #define HOTPINK_RGB         { 255, 105, 180, 128 }
+  #define DEEPPINK_RGB        { 255, 20, 147, 128 }
+  #define PALEVIOLETRED_RGB   { 219, 112, 147, 128 }
+  #define MEDIUMVIOLETRED_RGB { 199, 21, 133, 128 }
+
+  // Reds
+  #define LIGHTSALMON_RGB     { 255, 160, 122, 128 }
+  #define SALMON_RGB          { 250, 128, 114, 128 }
+  #define DARKSALMON_RGB      { 233, 150, 122, 128 }
+  #define LIGHTCORAL_RGB      { 240, 128, 128, 128 }
+  #define INDIANRED_RGB       { 205, 92, 92, 128 }
+  #define CRIMSON_RGB         { 220, 20, 60, 128 }
+  #define FIREBRICK_RGB       { 178, 34, 34, 128 }
+  #define DARKRED_RGB         { 139, 0, 0, 128 }
+  #define RED_RGB             { 255, 0, 0, 128 }
+
+  // Orange
+  #define ORANGERED_RGB       { 255, 69, 0, 128 }
+  #define TOMATO_RGB          { 255, 99, 71, 128 }
+  #define CORAL_RGB           { 255, 127, 80, 128 }
+  #define DARKORANGE_RGB      { 255, 140, 0, 128 }
+  #define ORANGE_RGB          { 255, 165, 0, 128 }
+
+  // Yellows
+  #define YELLOW_RGB          { 255, 255, 0, 128 }
+  #define LIGHTYELLOW_RGB     { 255, 255, 224, 128 }
+  #define LEMONCHIFFON_RGB    { 255, 250, 205, 128 }
+  #define LIGHTGOLDENRODYELLOW_RGB       { 250, 250, 210, 128 }
+  #define PAPAYAWHIP_RGB      { 255, 239, 213, 128 }
+  #define MOCCASIN_RGB        { 255, 228, 181, 128 }
+  #define PEACHPUFF_RGB       { 255, 218, 185, 128 }
+  #define PALEGOLDENROD_RGB   { 238, 232, 170, 128 }
+  #define KHAKI_RGB           { 240, 230, 140, 128 }
+  #define DARKKHAKI_RGB       { 189, 183, 107, 128 }
+  #define GOLD_RGB            { 255, 215, 0, 128 }
+
+  // Browns
+  #define CORNSILK_RGB        { 255, 248, 220, 128 }
+  #define BLANCHEDALMOND_RGB  { 255, 235, 205, 128 }
+  #define BISQUE_RGB          { 255, 228, 196, 128 }
+  #define NAVAJOWHITE_RGB     { 255, 222, 173, 128 }
+  #define WHEAT_RGB           { 245, 222, 179, 128 }
+  #define BURLYWOOD_RGB       { 222, 184, 135, 128 }
+  #define TAN_RGB             { 210, 180, 140, 128 }
+  #define ROSYBROWN_RGB       { 188, 143, 143, 128 }
+  #define SANDYBROWN_RGB      { 244, 164, 96, 128 }
+  #define GOLDENROD_RGB       { 218, 165, 32, 128 }
+  #define DARKGOLDENROD_RGB   { 184, 134, 11, 128 }
+  #define PERU_RGB            { 205, 133, 63, 128 }
+  #define CHOCOLATE_RGB       { 210, 105, 30, 128 }
+  #define SADDLEBROWN_RGB     { 139, 69, 19, 128 }
+  #define SIENNA_RGB          { 160, 82, 45, 128 }
+  #define BROWN_RGB           { 165, 42, 42, 128 }
+  #define MAROON_RGB          { 128, 0, 0, 128 }
+
+  // Greens
+  #define DARKOLIVEGREEN_RGB  { 85, 107, 47, 128 }
+  #define OLIVE_RGB           { 128, 128, 0, 128 }
+  #define OLIVEDRAB_RGB       { 107, 142, 35, 128 }
+  #define YELLOWGREEN_RGB     { 154, 205, 50, 128 }
+  #define LIMEGREEN_RGB       { 50, 205, 50, 128 }
+  #define LIME_RGB            { 0, 255, 0, 128 }
+  #define LAWNGREEN_RGB       { 124, 252, 0, 128 }
+  #define CHARTREUSE_RGB      { 127, 255, 0, 128 }
+  #define GREENYELLOW_RGB     { 173, 255, 47, 128 }
+  #define SPRINGGREEN_RGB     { 0, 255, 127, 128 }
+  #define MEDIUMSPRINGGREEN_RGB { 0, 250, 154, 128 }
+  #define LIGHTGREEN_RGB      { 144, 238, 144, 128 }
+  #define PALEGREEN_RGB       { 152, 251, 152, 128 }
+  #define DARKSEAGREEN_RGB    { 143, 188, 143, 128 }
+  #define MEDIUMAQUAMARINE_RGB  { 102, 205, 170, 128 }
+  #define MEDIUMSEAGREEN_RGB  { 60, 179, 113, 128 }
+  #define SEAGREEN_RGB        { 46, 139, 87, 128 }
+  #define FORESTGREEN_RGB     { 34, 139, 34, 128 }
+  #define GREEN_RGB           { 0, 128, 0, 128 }
+  #define DARKGREEN_RGB       { 0, 100, 0, 128 }
+
+  // Cyans
+  #define AQUA_RGB            { 0, 255, 255, 128 }
+  #define CYAN_RGB            { 0, 255, 255, 128 }
+  #define LIGHTCYAN_RGB       { 224, 255, 255, 128 }
+  #define PALETURQUOISE_RGB   { 175, 238, 238, 128 }
+  #define AQUAMARINE_RGB      { 127, 255, 212, 128 }
+  #define TURQUOISE_RGB       { 64, 224, 208, 128 }
+  #define MEDIUMTURQUOISE_RGB { 72, 209, 204, 128 }
+  #define DARKTURQUOISE_RGB   { 0, 206, 209, 128 }
+  #define LIGHTSEAGREEN_RGB   { 32, 178, 170, 128 }
+  #define CADETBLUE_RGB       { 95, 158, 160, 128 }
+  #define DARKCYAN_RGB        { 0, 139, 139, 128 }
+  #define TEAL_RGB            { 0, 128, 128, 128 }
+
+  // Blues
+  #define LIGHTSTEELBLUE_RGB  { 176, 196, 222, 128 }
+  #define POWDERBLUE_RGB      { 176, 224, 230, 128 }
+  #define LIGHTBLUE_RGB       { 173, 216, 230, 128 }
+  #define SKYBLUE_RGB         { 135, 206, 235, 128 }
+  #define LIGHTSKYBLUE_RGB    { 135, 206, 250, 128 }
+  #define DEEPSKYBLUE_RGB     { 0, 191, 255, 128 }
+  #define DODGERBLUE_RGB      { 30, 144, 255, 128 }
+  #define CORNFLOWERBLUE_RGB  { 100, 149, 237, 128 }
+  #define STEELBLUE_RGB       { 70, 130, 180, 128 }
+  #define ROYALBLUE_RGB       { 65, 105, 225, 128 }
+  #define BLUE_RGB            { 0, 0, 255, 128 }
+  #define MEDIUMBLUE_RGB      { 0, 0, 205, 128 }
+  #define DARKBLUE_RGB        { 0, 0, 139, 128 }
+  #define NAVY_RGB            { 0, 0, 128, 128 }
+  #define MIDNIGHTBLUE_RGB    { 25, 25, 112, 128 }
+
+  // Purples
+  #define LAVENDER_RGB        { 230, 230, 250, 128 }
+  #define THISTLE_RGB         { 216, 191, 216, 128 }
+  #define PLUM_RGB            { 221, 160, 221, 128 }
+  #define VIOLET_RGB          { 238, 130, 238, 128 }
+  #define ORCHID_RGB          { 218, 112, 214, 128 }
+  #define FUCHSIA_RGB         { 255, 0, 255, 128 }
+  #define MAGENTA_RGB         { 255, 0, 255, 128 }
+  #define MEDIUMORCHID_RGB    { 186, 85, 211, 128 }
+  #define MEDIUMPURPLE_RGB    { 147, 112, 219, 128 }
+  #define BLUEVIOLET_RGB      { 138, 43, 226, 128 }
+  #define DARKVIOLET_RGB      { 148, 0, 211, 128 }
+  #define DARKORCHID_RGB      { 153, 50, 204, 128 }
+  #define DARKMAGENTA_RGB     { 139, 0, 139, 128 }
+  #define PURPLE_RGB          { 128, 0, 128, 128 }
+  #define INDIGO_RGB          { 75, 0, 130, 128 }
+  #define DARKSLATEBLUE_RGB   { 72, 61, 139, 128 }
+  #define SLATEBLUE_RGB       { 106, 90, 205, 128 }
+  #define MEDIUMSLATEBLUE_RGB { 123, 104, 238, 128 }
+
+  // Whites
+  #define WHITE_RGB           { 255, 255, 255, 128 }
+  #define SNOW_RGB            { 255, 250, 250, 128 }
+  #define HONEYDEW_RGB        { 240, 255, 240, 128 }
+  #define MINTCREAM_RGB       { 245, 255, 250, 128 }
+  #define AZURE_RGB           { 240, 255, 255, 128 }
+  #define ALICEBLUE_RGB       { 240, 248, 255, 128 }
+  #define GHOSTWHITE_RGB      { 248, 248, 255, 128 }
+  #define WHITESMOKE_RGB      { 245, 245, 245, 128 }
+  #define SEASHELL_RGB        { 255, 245, 238, 128 }
+  #define BEIGE_RGB           { 245, 245, 220, 128 }
+  #define OLDLACE_RGB         { 253, 245, 230, 128 }
+  #define FLORALWHITE_RGB     { 255, 250, 240, 128 }
+  #define IVORY_RGB           { 255, 255, 240, 128 }
+  #define ANTIQUEWHITE_RGB    { 250, 235, 215, 128 }
+  #define LINEN_RGB           { 250, 240, 230, 128 }
+  #define LAVENDERBLUSH_RGB   { 255, 240, 245, 128 }
+  #define MISTYROSE_RGB       { 255, 228, 225, 128 }
+
+  // Grays
+  #define GAINSBORO_RGB       { 220, 220, 220, 128 }
+  #define LIGHTGRAY_RGB       { 211, 211, 211, 128 }
+  #define SILVER_RGB          { 192, 192, 192, 128 }
+  #define DARKGRAY_RGB        { 169, 169, 169, 128 }
+  #define GRAY_RGB            { 128, 128, 128, 128 }
+  #define DIMGRAY_RGB         { 105, 105, 105, 128 }
+  #define LIGHTSLATEGRAY_RGB  { 119, 136, 153, 128 }
+  #define SLATEGRAY_RGB       { 112, 128, 144, 128 }
+  #define DARKSLATEGRAY_RGB   { 47, 79, 79, 128 }
+  #define BLACK_RGB           { 0, 0, 0, 0 }
+
+#else
+  // RGB COlor Definitions
+  #define OFF_RGB             { 0, 0, 0 }
+
+  // Pinks
+  #define PINK_RGB            { 255, 192, 203 }
+  #define LIGHTPINK_RGB       { 255, 182, 193 }
+  #define HOTPINK_RGB         { 255, 105, 180 }
+  #define DEEPPINK_RGB        { 255, 20, 147 }
+  #define PALEVIOLETRED_RGB   { 219, 112, 147 }
+  #define MEDIUMVIOLETRED_RGB { 199, 21, 133 }
+
+  // Reds
+  #define LIGHTSALMON_RGB     { 255, 160, 122 }
+  #define SALMON_RGB          { 250, 128, 114 }
+  #define DARKSALMON_RGB      { 233, 150, 122 }
+  #define LIGHTCORAL_RGB      { 240, 128, 128 }
+  #define INDIANRED_RGB       { 205, 92, 92 }
+  #define CRIMSON_RGB         { 220, 20, 60 }
+  #define FIREBRICK_RGB       { 178, 34, 34 }
+  #define DARKRED_RGB         { 139, 0, 0 }
+  #define RED_RGB             { 255, 0, 0 }
+
+  // Orange
+  #define ORANGERED_RGB       { 255, 69, 0 }
+  #define TOMATO_RGB          { 255, 99, 71 }
+  #define CORAL_RGB           { 255, 127, 80 }
+  #define DARKORANGE_RGB      { 255, 140, 0 }
+  #define ORANGE_RGB          { 255, 165, 0 }
+
+  // Yellows
+  #define YELLOW_RGB          { 255, 255, 0 }
+  #define LIGHTYELLOW_RGB     { 255, 255, 224 }
+  #define LEMONCHIFFON_RGB    { 255, 250, 205 }
+  #define LIGHTGOLDENRODYELLOW_RGB       { 250, 250, 210 }
+  #define PAPAYAWHIP_RGB      { 255, 239, 213 }
+  #define MOCCASIN_RGB        { 255, 228, 181 }
+  #define PEACHPUFF_RGB       { 255, 218, 185 }
+  #define PALEGOLDENROD_RGB   { 238, 232, 170 }
+  #define KHAKI_RGB           { 240, 230, 140 }
+  #define DARKKHAKI_RGB       { 189, 183, 107 }
+  #define GOLD_RGB            { 255, 215, 0 }
+
+  // Browns
+  #define CORNSILK_RGB        { 255, 248, 220 }
+  #define BLANCHEDALMOND_RGB  { 255, 235, 205 }
+  #define BISQUE_RGB          { 255, 228, 196 }
+  #define NAVAJOWHITE_RGB     { 255, 222, 173 }
+  #define WHEAT_RGB           { 245, 222, 179 }
+  #define BURLYWOOD_RGB       { 222, 184, 135 }
+  #define TAN_RGB             { 210, 180, 140 }
+  #define ROSYBROWN_RGB       { 188, 143, 143 }
+  #define SANDYBROWN_RGB      { 244, 164, 96 }
+  #define GOLDENROD_RGB       { 218, 165, 32 }
+  #define DARKGOLDENROD_RGB   { 184, 134, 11 }
+  #define PERU_RGB            { 205, 133, 63 }
+  #define CHOCOLATE_RGB       { 210, 105, 30 }
+  #define SADDLEBROWN_RGB     { 139, 69, 19 }
+  #define SIENNA_RGB          { 160, 82, 45 }
+  #define BROWN_RGB           { 165, 42, 42 }
+  #define MAROON_RGB          { 128, 0, 0 }
+
+  // Greens
+  #define DARKOLIVEGREEN_RGB  { 85, 107, 47 }
+  #define OLIVE_RGB           { 128, 128, 0 }
+  #define OLIVEDRAB_RGB       { 107, 142, 35 }
+  #define YELLOWGREEN_RGB     { 154, 205, 50 }
+  #define LIMEGREEN_RGB       { 50, 205, 50 }
+  #define LIME_RGB            { 0, 255, 0 }
+  #define LAWNGREEN_RGB       { 124, 252, 0 }
+  #define CHARTREUSE_RGB      { 127, 255, 0 }
+  #define GREENYELLOW_RGB     { 173, 255, 47 }
+  #define SPRINGGREEN_RGB     { 0, 255, 127 }
+  #define MEDIUMSPRINGGREEN_RGB { 0, 250, 154 }
+  #define LIGHTGREEN_RGB      { 144, 238, 144 }
+  #define PALEGREEN_RGB       { 152, 251, 152 }
+  #define DARKSEAGREEN_RGB    { 143, 188, 143 }
+  #define MEDIUMAQUAMARINE_RGB  { 102, 205, 170 }
+  #define MEDIUMSEAGREEN_RGB  { 60, 179, 113 }
+  #define SEAGREEN_RGB        { 46, 139, 87 }
+  #define FORESTGREEN_RGB     { 34, 139, 34 }
+  #define GREEN_RGB           { 0, 128, 0 }
+  #define DARKGREEN_RGB       { 0, 100, 0 }
+
+  // Cyans
+  #define AQUA_RGB            { 0, 255, 255 }
+  #define CYAN_RGB            { 0, 255, 255 }
+  #define LIGHTCYAN_RGB       { 224, 255, 255 }
+  #define PALETURQUOISE_RGB   { 175, 238, 238 }
+  #define AQUAMARINE_RGB      { 127, 255, 212 }
+  #define TURQUOISE_RGB       { 64, 224, 208 }
+  #define MEDIUMTURQUOISE_RGB { 72, 209, 204 }
+  #define DARKTURQUOISE_RGB   { 0, 206, 209 }
+  #define LIGHTSEAGREEN_RGB   { 32, 178, 170 }
+  #define CADETBLUE_RGB       { 95, 158, 160 }
+  #define DARKCYAN_RGB        { 0, 139, 139 }
+  #define TEAL_RGB            { 0, 128, 128 }
+
+  // Blues
+  #define LIGHTSTEELBLUE_RGB  { 176, 196, 222 }
+  #define POWDERBLUE_RGB      { 176, 224, 230 }
+  #define LIGHTBLUE_RGB       { 173, 216, 230 }
+  #define SKYBLUE_RGB         { 135, 206, 235 }
+  #define LIGHTSKYBLUE_RGB    { 135, 206, 250 }
+  #define DEEPSKYBLUE_RGB     { 0, 191, 255 }
+  #define DODGERBLUE_RGB      { 30, 144, 255 }
+  #define CORNFLOWERBLUE_RGB  { 100, 149, 237 }
+  #define STEELBLUE_RGB       { 70, 130, 180 }
+  #define ROYALBLUE_RGB       { 65, 105, 225 }
+  #define BLUE_RGB            { 0, 0, 255 }
+  #define MEDIUMBLUE_RGB      { 0, 0, 205 }
+  #define DARKBLUE_RGB        { 0, 0, 139 }
+  #define NAVY_RGB            { 0, 0, 128 }
+  #define MIDNIGHTBLUE_RGB    { 25, 25, 112 }
+
+  // Purples
+  #define LAVENDER_RGB        { 230, 230, 250 }
+  #define THISTLE_RGB         { 216, 191, 216 }
+  #define PLUM_RGB            { 221, 160, 221 }
+  #define VIOLET_RGB          { 238, 130, 238 }
+  #define ORCHID_RGB          { 218, 112, 214 }
+  #define FUCHSIA_RGB         { 255, 0, 255 }
+  #define MAGENTA_RGB         { 255, 0, 255 }
+  #define MEDIUMORCHID_RGB    { 186, 85, 211 }
+  #define MEDIUMPURPLE_RGB    { 147, 112, 219 }
+  #define BLUEVIOLET_RGB      { 138, 43, 226 }
+  #define DARKVIOLET_RGB      { 148, 0, 211 }
+  #define DARKORCHID_RGB      { 153, 50, 204 }
+  #define DARKMAGENTA_RGB     { 139, 0, 139 }
+  #define PURPLE_RGB          { 128, 0, 128 }
+  #define INDIGO_RGB          { 75, 0, 130 }
+  #define DARKSLATEBLUE_RGB   { 72, 61, 139 }
+  #define SLATEBLUE_RGB       { 106, 90, 205 }
+  #define MEDIUMSLATEBLUE_RGB { 123, 104, 238 }
+
+  // Whites
+  #define WHITE_RGB           { 255, 255, 255 }
+  #define SNOW_RGB            { 255, 250, 250 }
+  #define HONEYDEW_RGB        { 240, 255, 240 }
+  #define MINTCREAM_RGB       { 245, 255, 250 }
+  #define AZURE_RGB           { 240, 255, 255 }
+  #define ALICEBLUE_RGB       { 240, 248, 255 }
+  #define GHOSTWHITE_RGB      { 248, 248, 255 }
+  #define WHITESMOKE_RGB      { 245, 245, 245 }
+  #define SEASHELL_RGB        { 255, 245, 238 }
+  #define BEIGE_RGB           { 245, 245, 220 }
+  #define OLDLACE_RGB         { 253, 245, 230 }
+  #define FLORALWHITE_RGB     { 255, 250, 240 }
+  #define IVORY_RGB           { 255, 255, 240 }
+  #define ANTIQUEWHITE_RGB    { 250, 235, 215 }
+  #define LINEN_RGB           { 250, 240, 230 }
+  #define LAVENDERBLUSH_RGB   { 255, 240, 245 }
+  #define MISTYROSE_RGB       { 255, 228, 225 }
+
+  // Grays
+  #define GAINSBORO_RGB       { 220, 220, 220 }
+  #define LIGHTGRAY_RGB       { 211, 211, 211 }
+  #define SILVER_RGB          { 192, 192, 192 }
+  #define DARKGRAY_RGB        { 169, 169, 169 }
+  #define GRAY_RGB            { 128, 128, 128 }
+  #define DIMGRAY_RGB         { 105, 105, 105 }
+  #define LIGHTSLATEGRAY_RGB  { 119, 136, 153 }
+  #define SLATEGRAY_RGB       { 112, 128, 144 }
+  #define DARKSLATEGRAY_RGB   { 47, 79, 79 }
+  #define BLACK_RGB           { 0, 0, 0 }
+
+#endif
+
+// Constant Palette
+#define C_WHITE             0
+#define C_RED               1
+#define C_YELLOW            2
+#define C_OLIVE             3
+#define C_LIME              4
+#define C_GREEN             5
+#define C_AQUA              6
+#define C_TEAL              7
+#define C_BLUE              8
+#define C_NAVY              9
+#define C_FUCHSIA           10
+#define C_PURPLE            11
+#define C_PINK              12
+#define C_CRIMSON           13
+#define C_ORANGE            14
+#define C_ORANGERED         15
+#define C_DARKORANGE        16
+#define C_GOLD              17
+#define C_MISTYROSE         18
+#define C_LAVENDER          19
+#define C_PLUM              20
+#define C_VIOLET            21
+#define C_ORCHID            22
+#define C_MAGENTA           23
+#define C_BLUEVIOLET        24
+#define C_INDIGO            25
+#define C_CYAN              26
+#define C_LIMEGREEN         27
+#define C_LIGHTGREEN        28
+#define C_FORESTGREEN       29
+#define C_HOTPINK           30
+#define C_PALEVIOLETRED     31
+
+
+// Active Palette Colors
+#define GOLD                12
+#define ORANGE              14
+#define DARKORANGE          16
+#define RED                 1
+#define CRIMSON             13
+#define YELLOW              2
+#define OLIVE               3
+#define TEAL                7
+#define FORESTGREEN         29
+#define BLUEVIOLET          24
+#define INDIGO              25
+#define WHITE               0
+#define GREEN               5
+
+// Size of Palette Array
+#define PALETTE_SIZE 32
 
 /////////////////////////
 // Global Variables
@@ -104,18 +478,25 @@ Adafruit_NeoPixel strips[STRIPS];
 int stripDefaults[][2] = { { PIXELS, PIN } };
 
 // gold, orange, darkorange, red, crimson, yellow, olive, olivedrab, darkolivegreen, blueviolet, lightred, white, green
-int colors[PALETTE_SIZE][RGB_SIZE] = { {255,215,0}, {255,165,0}, {255,140,0}, {255,0,0}, {220,20,60}, {255,255,0}, {128,128,0}, {107,142,35}, {85,107,47}, { 0, 0, 128 }, { 128, 0, 0 }, { 255, 255, 255 }, { 0, 255, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
-int totalColors = 13;
+int palette[PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_RGB, OLIVE_RGB, LIME_RGB, GREEN_RGB, AQUA_RGB, TEAL_RGB, BLUE_RGB, NAVY_RGB, 
+                                        FUCHSIA_RGB, PURPLE_RGB, PINK_RGB, CRIMSON_RGB, ORANGE_RGB, ORANGERED_RGB, DARKORANGE_RGB, GOLD_RGB, 
+                                        MISTYROSE_RGB, LAVENDER_RGB, PLUM_RGB, VIOLET_RGB, ORCHID_RGB, MAGENTA_RGB, BLUEVIOLET_RGB, INDIGO_RGB,
+                                        CYAN_RGB, LIMEGREEN_RGB, LIGHTGREEN_RGB, FORESTGREEN_RGB, HOTPINK_RGB, PALEVIOLETRED_RGB };
+int colors[PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_RGB, OLIVE_RGB, LIME_RGB, GREEN_RGB, AQUA_RGB, TEAL_RGB, BLUE_RGB, NAVY_RGB, 
+                                        FUCHSIA_RGB, PURPLE_RGB, PINK_RGB, CRIMSON_RGB, ORANGE_RGB, ORANGERED_RGB, DARKORANGE_RGB, GOLD_RGB, 
+                                        MISTYROSE_RGB, LAVENDER_RGB, PLUM_RGB, VIOLET_RGB, ORCHID_RGB, MAGENTA_RGB, BLUEVIOLET_RGB, INDIGO_RGB,
+                                        CYAN_RGB, LIMEGREEN_RGB, LIGHTGREEN_RGB, FORESTGREEN_RGB, HOTPINK_RGB, PALEVIOLETRED_RGB };
+int totalColors = 32;
 
 // Pixel Pattern Buffer
-int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { { colors[GOLD] }, { colors[OLIVE] }, { colors[DARKOLIVEGREEN] }, { colors[OLIVEDRAB] }, { colors[GREEN] } } };
+int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { GOLD_RGB, OLIVE_RGB, TEAL_RGB, FORESTGREEN_RGB, GREEN_RGB } };
 
 // Scratch Pixel & Default Pixels
-int rgbPixel[RGB_SIZE] = { colors[GREEN] };
+int rgbPixel[RGB_SIZE] = GREEN_RGB;
 // Off Pixel
-int offPixel[RGB_SIZE] = { 0, 0, 0 };
+int offPixel[RGB_SIZE] = BLACK_RGB;
 // Palette RGB
-int paletteRGB[RGB_SIZE] = { 0, 0, 0 };
+int paletteRGB[RGB_SIZE] = BLACK_RGB;
 // Palette Index
 int paletteIndex = 0;
 
@@ -501,6 +882,20 @@ uint32_t AdjustColor(int color, int percent) {
 
   return (GetColor(pixelColor));
 }
+
+#if RGB_SIZE > 3
+// Adjust Brightness of 4 Color Pixel
+void AdjustPixelBrightness(int pixel[RGB_SIZE], int brightness)
+{
+  pixel[3] = brightness;
+}
+
+// Adjust Brightness Value of 4 Color Pixel in Palette
+void AdjustPixelInPaletteBrightness(int color, int brightness)
+{
+  colors[color][3] = brightness;
+}
+#endif
 
 // Get New Color
 void NewColor() {
