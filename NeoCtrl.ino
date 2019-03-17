@@ -51,7 +51,7 @@
 // RGB Pixel Buffer Size 3 = RGB, 4 = RGBW
 #define RGB_SIZE 3
 // Initial Fade State (0 = no fade, > 0, fade on)
-#define FADESTATE 0
+#define FADESTATE 1
 
 // Command Registers
 #define R_SHOW 0
@@ -415,58 +415,39 @@
 
 #endif
 
-// Constant Palette
-#define C_WHITE             0
-#define C_RED               1
-#define C_YELLOW            2
-#define C_OLIVE             3
-#define C_LIME              4
-#define C_GREEN             5
-#define C_AQUA              6
-#define C_TEAL              7
-#define C_BLUE              8
-#define C_NAVY              9
-#define C_FUCHSIA           10
-#define C_PURPLE            11
-#define C_PINK              12
-#define C_CRIMSON           13
-#define C_ORANGE            14
-#define C_ORANGERED         15
-#define C_DARKORANGE        16
-#define C_GOLD              17
-#define C_MISTYROSE         18
-#define C_LAVENDER          19
-#define C_PLUM              20
-#define C_VIOLET            21
-#define C_ORCHID            22
-#define C_MAGENTA           23
-#define C_BLUEVIOLET        24
-#define C_INDIGO            25
-#define C_CYAN              26
-#define C_LIMEGREEN         27
-#define C_LIGHTGREEN        28
-#define C_FORESTGREEN       29
-#define C_HOTPINK           30
-#define C_PALEVIOLETRED     31
-
-
-// Active Palette Colors
-#define GOLD                12
-#define ORANGE              14
-#define DARKORANGE          16
-#define RED                 1
-#define CRIMSON             13
-#define YELLOW              2
-#define OLIVE               3
-#define TEAL                7
-#define FORESTGREEN         29
-#define BLUEVIOLET          24
-#define INDIGO              25
-#define WHITE               0
-#define GREEN               5
-
-// Size of Palette Array
-#define PALETTE_SIZE 32
+// System Palette : This is the system palette, in that, it contains a list of RGB or RGBW colors selected from the defined color values.
+#define S_WHITE             0
+#define S_RED               1
+#define S_YELLOW            2
+#define S_OLIVE             3
+#define S_LIME              4
+#define S_GREEN             5
+#define S_AQUA              6
+#define S_TEAL              7
+#define S_BLUE              8
+#define S_NAVY              9
+#define S_FUCHSIA           10
+#define S_PURPLE            11
+#define S_PINK              12
+#define S_CRIMSON           13
+#define S_ORANGE            14
+#define S_ORANGERED         15
+#define S_DARKORANGE        16
+#define S_GOLD              17
+#define S_MISTYROSE         18
+#define S_LAVENDER          19
+#define S_PLUM              20
+#define S_VIOLET            21
+#define S_ORCHID            22
+#define S_MAGENTA           23
+#define S_BLUEVIOLET        24
+#define S_INDIGO            25
+#define S_CYAN              26
+#define S_LIMEGREEN         27
+#define S_LIGHTGREEN        28
+#define S_FORESTGREEN       29
+#define S_HOTPINK           30
+#define S_PALEVIOLETRED     31
 
 /////////////////////////
 // Global Variables
@@ -477,24 +458,31 @@ Adafruit_NeoPixel strips[STRIPS];
 // Strip Defaults
 int stripDefaults[][2] = { { PIXELS, PIN } };
 
-// gold, orange, darkorange, red, crimson, yellow, olive, olivedrab, darkolivegreen, blueviolet, lightred, white, green
-int palette[PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_RGB, OLIVE_RGB, LIME_RGB, GREEN_RGB, AQUA_RGB, TEAL_RGB, BLUE_RGB, NAVY_RGB, 
-                                        FUCHSIA_RGB, PURPLE_RGB, PINK_RGB, CRIMSON_RGB, ORANGE_RGB, ORANGERED_RGB, DARKORANGE_RGB, GOLD_RGB, 
-                                        MISTYROSE_RGB, LAVENDER_RGB, PLUM_RGB, VIOLET_RGB, ORCHID_RGB, MAGENTA_RGB, BLUEVIOLET_RGB, INDIGO_RGB,
-                                        CYAN_RGB, LIMEGREEN_RGB, LIGHTGREEN_RGB, FORESTGREEN_RGB, HOTPINK_RGB, PALEVIOLETRED_RGB };
-int colors[PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_RGB, OLIVE_RGB, LIME_RGB, GREEN_RGB, AQUA_RGB, TEAL_RGB, BLUE_RGB, NAVY_RGB, 
-                                        FUCHSIA_RGB, PURPLE_RGB, PINK_RGB, CRIMSON_RGB, ORANGE_RGB, ORANGERED_RGB, DARKORANGE_RGB, GOLD_RGB, 
-                                        MISTYROSE_RGB, LAVENDER_RGB, PLUM_RGB, VIOLET_RGB, ORCHID_RGB, MAGENTA_RGB, BLUEVIOLET_RGB, INDIGO_RGB,
-                                        CYAN_RGB, LIMEGREEN_RGB, LIGHTGREEN_RGB, FORESTGREEN_RGB, HOTPINK_RGB, PALEVIOLETRED_RGB };
-int totalColors = 32;
+// Palette Array Definitions
 
-// Pixel Pattern Buffer
+// The System Palette - Defines all the RGB color triplets or quadruplets currently available to the app.
+#define SYSTEM_PALETTE_SIZE 32
+int totalSystemColors = SYSTEM_PALETTE_SIZE;
+int systemPalette[SYSTEM_PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_RGB, OLIVE_RGB, LIME_RGB, GREEN_RGB, AQUA_RGB, TEAL_RGB, BLUE_RGB, NAVY_RGB, 
+                                        FUCHSIA_RGB, PURPLE_RGB, PINK_RGB, CRIMSON_RGB, ORANGE_RGB, ORANGERED_RGB, DARKORANGE_RGB, GOLD_RGB, 
+                                        MISTYROSE_RGB, LAVENDER_RGB, PLUM_RGB, VIOLET_RGB, ORCHID_RGB, MAGENTA_RGB, BLUEVIOLET_RGB, INDIGO_RGB,
+                                        CYAN_RGB, LIMEGREEN_RGB, LIGHTGREEN_RGB, FORESTGREEN_RGB, HOTPINK_RGB, PALEVIOLETRED_RGB };
+
+// The Active Palette - A list of indexes into the systemPalette, used for effects processing
+// Size of Active Palette
+#define ACTIVE_PALETTE_SIZE 2
+int totalActiveColors = ACTIVE_PALETTE_SIZE;
+int activePalette[ACTIVE_PALETTE_SIZE] = { S_GREEN, S_GOLD };
+
+// Pixel Pattern Buffer - Can be used to map out each pixel color vector for each strip [not currently used, but this is the intent]
 int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { GOLD_RGB, OLIVE_RGB, TEAL_RGB, FORESTGREEN_RGB, GREEN_RGB } };
 
 // Scratch Pixel & Default Pixels
 int rgbPixel[RGB_SIZE] = GREEN_RGB;
 // Off Pixel
 int offPixel[RGB_SIZE] = BLACK_RGB;
+// White Pixel
+int whitePixel[RGB_SIZE] = WHITE_RGB;
 // Palette RGB
 int paletteRGB[RGB_SIZE] = BLACK_RGB;
 // Palette Index
@@ -519,7 +507,7 @@ int fadeState = FADESTATE;
 // Global Mix down Color
 uint32_t mixedColor;
 // Current Mixed Color
-int currentColor = GREEN;
+int currentColor = S_GREEN;
 // Current Strip
 int currentStrip = 0;
 // Current Pixel
@@ -567,8 +555,8 @@ void setup() {
   randomSeed(analogRead(0));
 
   // Set Colors
-  oneColor = GREEN;
-  currentColor = GREEN;
+  oneColor = S_GREEN;
+  currentColor = S_GREEN;
 
   // Init Neopixel strips
   for (int index=0; index < STRIPS; ++index)
@@ -581,8 +569,7 @@ void setup() {
 }
 
 // *** I2C Recieve Loop
-void i2cReceive(int howManyBytes)
-{
+void i2cReceive(int howManyBytes) {
   while (Wire.available() > 0) {
     char r = Wire.read();
     char v = Wire.read();
@@ -623,7 +610,7 @@ void i2cReceive(int howManyBytes)
       }
       break;
       case R_COLOR: {
-        if (v <= totalColors && v > -1) {
+        if (v <= totalSystemColors && v > -1) {
           currentColor = v;
           SetPixel(currentStrip,currentPixel,currentColor);
           Show(currentStrip);
@@ -635,7 +622,7 @@ void i2cReceive(int howManyBytes)
       }
       break;
       case R_SETSTRIPS: {
-        if (v <= totalColors && v > -1)
+        if (v <= totalSystemColors && v > -1)
         {
           currentColor = v;
 
@@ -644,11 +631,11 @@ void i2cReceive(int howManyBytes)
       }
       break;
       case R_SETPALREG: {
-        CopyPixel(colors[paletteIndex],paletteRGB);
+        CopyPixel(systemPalette[paletteIndex],paletteRGB);
       }
       break;
       case R_PALETTEINDEX: {
-        if (v <= PALETTE_SIZE && v >= 0)
+        if (v <= SYSTEM_PALETTE_SIZE && v >= 0)
           paletteIndex = v;
       }
       break;
@@ -672,9 +659,9 @@ void i2cReceive(int howManyBytes)
       }
       break;
       case R_MAXPAL: {
-        if (v <= PALETTE_SIZE)
+        if (v <= SYSTEM_PALETTE_SIZE)
         {
-          totalColors = v;
+          totalSystemColors = v;
         }
       }
       break;
@@ -710,8 +697,8 @@ void i2cReceive(int howManyBytes)
         Serial.println(percentColor,DEC);
         Serial.print("LED Toggle     : ");
         Serial.println(ledToggle,DEC);
-        Serial.print("Color Count    : ");
-        Serial.println(totalColors,DEC);
+        Serial.print("System Colors  : ");
+        Serial.println(totalSystemColors,DEC);
         Serial.print("DebugMode      : ");
         Serial.println(DebugMode,DEC);
         Serial.print("Serial Enable  : ");
@@ -802,12 +789,12 @@ void Show(int stripIndex) {
 
 // Set the Color of a Specific Pixel (w/No Adjust)
 void SetPixel(int stripIndex, int pixelIndex, int color) {
-  strips[stripIndex].setPixelColor(pixelIndex,GetColor(colors[color]));
+  strips[stripIndex].setPixelColor(pixelIndex,MixColorVector(systemPalette[color]));
 }
 
 // Set Pixels on A Strip To An RGB/W Value (w/0 Percent Adjust)
 void SetRGBPixels(int strip, int rgbColor[], int wait) {
-  uint32_t c = GetColor(rgbColor);
+  uint32_t c = MixColorVector(rgbColor);
   
   for (uint16_t index=0; index < strips[strip].numPixels(); ++index)
   {
@@ -836,7 +823,7 @@ void SetPixels(int strip, int color, int wait) {
 }
 
 // Mixdown RGB/W Values
-uint32_t GetColor(int pixel[RGB_SIZE]) {
+uint32_t MixColorVector(int pixel[RGB_SIZE]) {
   uint32_t color = 0;
   
   if (RGB_SIZE == 3)
@@ -871,47 +858,46 @@ uint32_t AdjustColor(int color, int percent) {
   float p = (float(percent) / 100.0);
   int pixelColor[RGB_SIZE];
   int tmpColor[RGB_SIZE];
-  int white[4] = { 255, 255, 255, 255 };
 
-  CopyPixel(pixelColor,colors[color]);
+  CopyPixel(pixelColor,systemPalette[color]);
 
   for (int index=0; index < RGB_SIZE; ++index)
   {
-    pixelColor[index] = int(float(colors[color][index]) * p);
+    pixelColor[index] = int(float(systemPalette[color][index]) * p);
   }
 
-  return (GetColor(pixelColor));
+  return (MixColorVector(pixelColor));
 }
 
 #if RGB_SIZE > 3
 // Adjust Brightness of 4 Color Pixel
-void AdjustPixelBrightness(int pixel[RGB_SIZE], int brightness)
-{
+void AdjustPixelBrightness(int pixel[RGB_SIZE], int brightness){
   pixel[3] = brightness;
 }
 
 // Adjust Brightness Value of 4 Color Pixel in Palette
-void AdjustPixelInPaletteBrightness(int color, int brightness)
-{
+void AdjustPixelInPaletteBrightness(int color, int brightness) {
   colors[color][3] = brightness;
 }
 #endif
 
-// Get New Color
-void NewColor() {
-  if (oneColor < 0)
-    currentColor = random(0,totalColors - 1);
-  else
+// Get New Color from Active Palette
+void NewColorFromActivePalette() {
+  if (oneColor < 0) {
+    int newIndex = random(0,totalActiveColors - 1);
+
+    currentColor = activePalette[newIndex];
+  } else
     currentColor = oneColor;
 }
 
-// Fade Down, then Up
+// Fade Down, then Up - Colors selected from Active Palette, not System Palette
 void Fade() {
   // Flip fade up/down the color
   if (percentColor <= 0) {
     fadeStep = abs(fadeStep);
     percentColor = 0;
-    NewColor();
+    NewColorFromActivePalette();
   }
   else if (percentColor >= 100) {
     fadeStep = (fadeStep*-1);
@@ -928,8 +914,7 @@ void Fade() {
 
 /// *** End Change/Fade Helpers
 
-void ToggleOnBoardLed()
-{
+void ToggleOnBoardLed() {
   if (DebugMode) {
     digitalWrite(LED_BUILTIN,ledToggle);
     ledToggle = !ledToggle;
@@ -951,6 +936,9 @@ void loop() {
       initialized = 1;
       TurnOnStrips(currentColor);
     }
+
+    // Effects processing should go here.
+    // Effects processing should use active palette only.
     if (fadeState && timeInColor > maxColorTime) {
       Fade();
       timeInColor = 0;
