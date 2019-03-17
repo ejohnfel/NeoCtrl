@@ -50,8 +50,15 @@
 #define DELAY 100
 // RGB Pixel Buffer Size 3 = RGB, 4 = RGBW
 #define RGB_SIZE 3
-// Initial Fade State (0 = no fade, > 0, fade on)
-#define FADESTATE 1
+
+// Initial Effects State On Or Off (0 = off > 0 = On)
+#define EFFECTS_INITIAL_STATE 1
+// Initial Effect
+#define INITIAL_EFFECT 0
+// Fade Effect
+#define EFFECT_FADE 0
+// Defined Pattern State (all pixels and all strips defined)
+#define EFFECT_DEFINED_PATTERN 1
 
 // Command Registers
 #define R_SHOW 0
@@ -72,10 +79,11 @@
 #define R_MAXPAL 15
 #define R_STATUS 16
 #define R_DEBUG 17
-#define R_FADE 18
+#define R_EFFECTSTATE 18
 #define R_COLORTIME 19
 #define R_COLORTIMEMULT 20
 #define R_PERCENTCOLOR 21
+#define R_EFFECT 22
 
 // Palette Color Definitions
 
@@ -474,9 +482,6 @@ int systemPalette[SYSTEM_PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_
 int totalActiveColors = ACTIVE_PALETTE_SIZE;
 int activePalette[ACTIVE_PALETTE_SIZE] = { S_GREEN, S_GOLD };
 
-// Pixel Pattern Buffer - Can be used to map out each pixel color vector for each strip [not currently used, but this is the intent]
-int pixelPatternBuffer[STRIPS][PIXELS][RGB_SIZE] = { { GOLD_RGB, OLIVE_RGB, TEAL_RGB, FORESTGREEN_RGB, GREEN_RGB } };
-
 // Scratch Pixel & Default Pixels
 int rgbPixel[RGB_SIZE] = GREEN_RGB;
 // Off Pixel
@@ -495,14 +500,39 @@ long maxColorTimeMultiplier = 100000;
 // MaxColor Time (in ms)
 long maxColorTime = (3 * maxColorTimeMultiplier);
 // Color Timer
-long timeInColor = 0;
+long timeInEffect = 0;
+
+// *****
+// Effects Definitions
+// *****
+
+// Effects State
+int effectsState = EFFECTS_INITIAL_STATE;
+// Current Effect in processing
+int currentEffect = INITIAL_EFFECT;
+
+// *** Pixel Pattern Buffer
+// This is used to define a series of patterns for all pixels on all strips
+
+// Pixel Pattern Buffer
+#define PATTERN_COUNT 3
+int pixelPatternBuffer[PATTERN_COUNT][STRIPS][PIXELS] = {
+  { { S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE, S_RED, S_WHITE } },
+  { { S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE, S_WHITE } },
+  { { S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED, S_RED } }
+  };
+// Variable Pattern Cound
+int patternCount = PATTERN_COUNT;
+// Current Pixel Pattern
+int currentPattern = 0;
+
+// *** Fade Effect Variables
+// Fades a given color up, holds it for a time, then fades it down and selects a new color from the active palette
 
 // Fade Step
 int fadeStep = -1;
 // Fade Delay
 int fadeDelay = 100;
-// Fade State (on or off)
-int fadeState = FADESTATE;
 
 // Global Mix down Color
 uint32_t mixedColor;
@@ -679,22 +709,28 @@ void i2cReceive(int howManyBytes) {
         Serial.println(currentStrip,DEC);
         Serial.print("Show LEDS      : ");
         Serial.println(showLeds,DEC);
-        Serial.print("Time In Color  : ");
-        Serial.println(timeInColor,DEC);
+        Serial.print("Time In Effect : ");
+        Serial.println(timeInEffect,DEC);
         Serial.print("maxColorTimeM  : ");
         Serial.println(maxColorTimeMultiplier,DEC);
         Serial.print("Delay          : ");
         Serial.println(Delay,DEC);
         Serial.print("RGB Size       : ");
         Serial.println(RGB_SIZE,DEC);
-        Serial.print("Fade State     : ");
-        Serial.println(fadeState,DEC);
-        Serial.print("Fade Step      : ");
-        Serial.println(fadeStep,DEC);
-        Serial.print("Fade Delay     : ");
-        Serial.println(fadeDelay,DEC);
-        Serial.print("Percent Color  : ");
-        Serial.println(percentColor,DEC);
+        Serial.print("Effects State  : ");
+        Serial.println(effectsState,DEC);
+        Serial.print("Current Effect : ");
+        Serial.println(currentEffect,DEC);
+        if (currentEffect == EFFECT_FADE) {
+          Serial.print("Fade Step      : ");
+          Serial.println(fadeStep,DEC);
+          Serial.print("Fade Delay     : ");
+          Serial.println(fadeDelay,DEC);
+          Serial.print("Percent Color  : ");
+          Serial.println(percentColor,DEC);
+        } else if (currentEffect == EFFECT_DEFINED_PATTERN) {
+          Serial.println("\tCurrent Effect is : DEFINED_PATTERN");
+        }
         Serial.print("LED Toggle     : ");
         Serial.println(ledToggle,DEC);
         Serial.print("System Colors  : ");
@@ -723,8 +759,9 @@ void i2cReceive(int howManyBytes) {
         DebugMode = v;
       }
       break;
-      case R_FADE: {
-        fadeState = v;
+      case R_EFFECTSTATE: {
+        v = (v == 0 || v > 0) ? v : 0;
+        effectsState = v;
       }
       break;
       case R_COLORTIME: {
@@ -737,6 +774,10 @@ void i2cReceive(int howManyBytes) {
       break;
       case R_PERCENTCOLOR: {
         percentColor = abs(v);
+      }
+      break;
+      case R_EFFECT:{
+        currentEffect = abs(v);
       }
       break;
     }
@@ -780,6 +821,11 @@ void TurnOnStrips(int color) {
     TurnOnStrip(index,color);
 }
 
+// Show Strip
+void ShowStrip(int strip) {
+  strips[strip].show();
+}
+
 // *** Set Pixel Functions ***
 
 // Show New Settings On Strip
@@ -801,7 +847,7 @@ void SetRGBPixels(int strip, int rgbColor[], int wait) {
     strips[strip].setPixelColor(index,c);
   }
 
-  strips[strip].show();
+  ShowStrip(strip);
   
   if (wait > 0)
     delay(wait);
@@ -816,10 +862,23 @@ void SetPixels(int strip, int color, int wait) {
     strips[strip].setPixelColor(index,c);
   }
 
-  strips[strip].show();
+  ShowStrip(strip);
   
   if (wait > 0)
     delay(wait);
+}
+
+// Set Strip By Pattern
+void SetPattern(int pattern) {
+  for (int strip = 0; strip < STRIPS; ++strip)
+  {
+    for (int pixel = 0; pixel < PIXELS; ++pixel)
+    {
+      SetPixel(strip,pixel,pixelPatternBuffer[pattern][strip][pixel]);
+    }
+    
+    ShowStrip(strip); 
+  }
 }
 
 // Mixdown RGB/W Values
@@ -846,7 +905,9 @@ void CopyPixel(int dst[RGB_SIZE],int src[RGB_SIZE]) {
 
 // *** End Set Pixel Functions
 
-// *** Step/Fade Helpers
+/*
+ * Effects Helpers
+ */
 
 // Toggle Step
 int ToggleStep(int stepValue) {
@@ -870,6 +931,7 @@ uint32_t AdjustColor(int color, int percent) {
 }
 
 #if RGB_SIZE > 3
+
 // Adjust Brightness of 4 Color Pixel
 void AdjustPixelBrightness(int pixel[RGB_SIZE], int brightness){
   pixel[3] = brightness;
@@ -879,10 +941,17 @@ void AdjustPixelBrightness(int pixel[RGB_SIZE], int brightness){
 void AdjustPixelInPaletteBrightness(int color, int brightness) {
   colors[color][3] = brightness;
 }
+
 #endif
 
-// Get New Color from Active Palette
-void NewColorFromActivePalette() {
+// Get Next Effect Pattern
+void NewEffectPattern() {
+  // Use Modulo arithmetic to cycle through patterns
+  currentPattern = ((currentPattern+1) % patternCount);
+}
+
+// Get New Fade Color from Active Palette
+void NewFadeColorFromActivePalette() {
   if (oneColor < 0) {
     int newIndex = random(0,totalActiveColors - 1);
 
@@ -891,29 +960,61 @@ void NewColorFromActivePalette() {
     currentColor = oneColor;
 }
 
+// *** End of Effects Helpers
+
+/*
+ * Effect Routines
+ */
+ 
 // Fade Down, then Up - Colors selected from Active Palette, not System Palette
 void Fade() {
-  // Flip fade up/down the color
-  if (percentColor <= 0) {
-    fadeStep = abs(fadeStep);
-    percentColor = 0;
-    NewColorFromActivePalette();
-  }
-  else if (percentColor >= 100) {
-    fadeStep = (fadeStep*-1);
-    percentColor = 100;
-  }
-    
-  percentColor += fadeStep;
+  if (timeInEffect > maxColorTime) {
+    // Flip fade up/down the color
+    if (percentColor <= 0) {
+      fadeStep = abs(fadeStep);
+      percentColor = 0;
+      NewFadeColorFromActivePalette();
 
-  for (int index=0; index < STRIPS; ++index)
-    SetPixels(index,currentColor,0);
+      timeInEffect = 0;
+    } else if (percentColor >= 100) {
+      fadeStep = (fadeStep*-1);
+      percentColor = 100;
+    }
+      
+    percentColor += fadeStep;
+  
+    for (int index=0; index < STRIPS; ++index)
+      SetPixels(index,currentColor,0);
+  
+    delay(fadeDelay);
+  } else {
+      delay(Delay);
 
-  delay(fadeDelay);
+      timeInEffect += Delay;
+  }
 }
 
-/// *** End Change/Fade Helpers
+// Defined Pattern Effect
+void DefinedPatternEffect() {
+    if (timeInEffect > maxColorTime)
+    {
+      NewEffectPattern();
 
+      SetPattern(currentPattern);
+
+      timeInEffect = 0;
+    } else {
+      delay(Delay);
+
+      timeInEffect += Delay;
+    }
+}
+
+/*
+ * General Helper Functions
+ */
+
+// Toggle Onboard LED (if enabled, useful for debugging purposes)
 void ToggleOnBoardLed() {
   if (DebugMode) {
     digitalWrite(LED_BUILTIN,ledToggle);
@@ -937,18 +1038,20 @@ void loop() {
       TurnOnStrips(currentColor);
     }
 
-    // Effects processing should go here.
-    // Effects processing should use active palette only.
-    if (fadeState && timeInColor > maxColorTime) {
-      Fade();
-      timeInColor = 0;
-    } else {
-      delay(Delay);
-
-      timeInColor += Delay;
-
-      if (!fadeState && timeInColor > maxColorTime)
-        timeInColor = 0;
+    // Effects Processing
+    if (effectsState) {
+      switch (currentEffect) {
+      case EFFECT_FADE:
+      {
+          Fade();
+      }
+      break;
+      case EFFECT_DEFINED_PATTERN:
+      {
+        DefinedPatternEffect();  
+      }
+      break;
+      }
     }
   }
 }
