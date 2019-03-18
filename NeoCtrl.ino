@@ -533,6 +533,12 @@ int currentPattern = 0;
 int fadeStep = -1;
 // Fade Delay
 int fadeDelay = 100;
+// Fading Flag
+int fading = 0;
+// Fade Color Selection (0 = Random, 1 = Modulo)
+int fadeColorSelection = 1;
+// Current Fade Color (index into active palette)
+int currentFadeColor = 0;
 
 // Global Mix down Color
 uint32_t mixedColor;
@@ -728,6 +734,10 @@ void i2cReceive(int howManyBytes) {
           Serial.println(fadeDelay,DEC);
           Serial.print("Percent Color  : ");
           Serial.println(percentColor,DEC);
+          Serial.print("Color Selection: ");
+          Serial.println(fadeColorSelection,DEC);
+          Serial.print("Fading         : ");
+          Serial.println(fading,DEC);
         } else if (currentEffect == EFFECT_DEFINED_PATTERN) {
           Serial.println("\tCurrent Effect is : DEFINED_PATTERN");
         }
@@ -953,9 +963,9 @@ void NewEffectPattern() {
 // Get New Fade Color from Active Palette
 void NewFadeColorFromActivePalette() {
   if (oneColor < 0) {
-    int newIndex = random(0,totalActiveColors - 1);
+    currentFadeColor = (fadeColorSelection) ? ((currentFadeColor + 1) % totalActiveColors) : random(0,totalActiveColors - 1);
 
-    currentColor = activePalette[newIndex];
+    currentColor = activePalette[currentFadeColor];
   } else
     currentColor = oneColor;
 }
@@ -971,14 +981,14 @@ void Fade() {
   if (timeInEffect > maxColorTime) {
     // Flip fade up/down the color
     if (percentColor <= 0) {
-      fadeStep = abs(fadeStep);
+      fadeStep = 1;
       percentColor = 0;
       NewFadeColorFromActivePalette();
-
-      timeInEffect = 0;
+      fading = 2;
     } else if (percentColor >= 100) {
-      fadeStep = (fadeStep*-1);
+      fadeStep = -1;
       percentColor = 100;
+      fading = 1;
     }
       
     percentColor += fadeStep;
@@ -987,10 +997,15 @@ void Fade() {
       SetPixels(index,currentColor,0);
   
     delay(fadeDelay);
-  } else {
-      delay(Delay);
 
-      timeInEffect += Delay;
+    if (fading == 2 && percentColor >= 100) {
+      fading = 0;
+      timeInEffect = 0;
+    }
+  } else {
+    delay(Delay);
+
+    timeInEffect += Delay;
   }
 }
 
