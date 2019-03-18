@@ -591,7 +591,7 @@ void setup() {
   randomSeed(analogRead(0));
 
   // Set Colors
-  oneColor = S_GREEN;
+  oneColor = -1;
   currentColor = S_GREEN;
 
   // Init Neopixel strips
@@ -709,6 +709,8 @@ void i2cReceive(int howManyBytes) {
         Serial.println(maxBrightness,DEC);
         Serial.print("Current Color  : ");
         Serial.println(currentColor,DEC);
+        Serial.print("One Color Flag : ");
+        Serial.println(oneColor,DEC);
         Serial.print("Current Pixel  : ");
         Serial.println(currentPixel,DEC);
         Serial.print("Current Strip  : ");
@@ -738,6 +740,8 @@ void i2cReceive(int howManyBytes) {
           Serial.println(fadeColorSelection,DEC);
           Serial.print("Fading         : ");
           Serial.println(fading,DEC);
+          Serial.print("Fade Color Idx : ");
+          Serial.println(currentFadeColor,DEC);
         } else if (currentEffect == EFFECT_DEFINED_PATTERN) {
           Serial.println("\tCurrent Effect is : DEFINED_PATTERN");
         }
