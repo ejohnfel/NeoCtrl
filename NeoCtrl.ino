@@ -37,11 +37,24 @@
 // Debug Delay
 #define DEBUGDELAY 500
 // Number of strips
-#define STRIPS 1
+#define STRIPS 2
 // Default PIN for default strip
 #define PIN 6
 // Default pixel length for default strip
 #define PIXELS 25
+
+// STRIP 1 Info
+#define STRIP1PIN 6
+#define STRIP1LEN 25
+#define STRIP1COLOR 17
+#define STRIP1ONPIN -1
+
+// Strip 2 Info
+#define STRIP2PIN 5
+#define STRIP2LEN 25
+#define STRIP2COLOR 11
+#define STRIP2ONPIN -1
+
 // Min Value for Brightness and R-G-B component values
 #define MIN 0
 // Max Value for Brightness and R-G-B component values
@@ -51,8 +64,8 @@
 // RGB Pixel Buffer Size 3 = RGB, 4 = RGBW
 #define RGB_SIZE 3
 
-// Initial Effects State On Or Off (0 = off > 0 = On)
-#define EFFECTS_INITIAL_STATE 1
+// Initial Effects State On Or Off (0 = off, 1 = On)
+#define EFFECTS_INITIAL_STATE 0
 // Initial Effect
 #define INITIAL_EFFECT 0
 // Fade Effect
@@ -464,7 +477,7 @@
 // Neopixel Strip Objects
 Adafruit_NeoPixel strips[STRIPS];
 // Strip Defaults
-int stripDefaults[][2] = { { PIXELS, PIN } };
+int stripDefaults[][4] = { { STRIP1LEN, STRIP1PIN, STRIP1COLOR, STRIP1ONPIN }, { STRIP2LEN, STRIP2PIN, STRIP2COLOR, STRIP2ONPIN } };
 
 // Palette Array Definitions
 
@@ -480,10 +493,10 @@ int systemPalette[SYSTEM_PALETTE_SIZE][RGB_SIZE] = { WHITE_RGB, RED_RGB, YELLOW_
 // Size of Active Palette
 #define ACTIVE_PALETTE_SIZE 2
 int totalActiveColors = ACTIVE_PALETTE_SIZE;
-int activePalette[ACTIVE_PALETTE_SIZE] = { S_GREEN, S_GOLD };
+int activePalette[ACTIVE_PALETTE_SIZE] = { S_GOLD, S_PURPLE };
 
 // Scratch Pixel & Default Pixels
-int rgbPixel[RGB_SIZE] = GREEN_RGB;
+int rgbPixel[RGB_SIZE] = PURPLE_RGB;
 // Off Pixel
 int offPixel[RGB_SIZE] = BLACK_RGB;
 // White Pixel
@@ -543,7 +556,7 @@ int currentFadeColor = 0;
 // Global Mix down Color
 uint32_t mixedColor;
 // Current Mixed Color
-int currentColor = S_GREEN;
+int currentColor = S_PURPLE;
 // Current Strip
 int currentStrip = 0;
 // Current Pixel
@@ -592,15 +605,25 @@ void setup() {
 
   // Set Colors
   oneColor = -1;
-  currentColor = S_GREEN;
+  currentColor = S_PURPLE;
 
   // Init Neopixel strips
   for (int index=0; index < STRIPS; ++index)
   {
+    // If strip is powered by a GPIO pin (i.e. pin value > -1), set the pin high to start the power
+    if (stripDefaults[index][3] > -1)
+    {
+      // Set the pin to output
+      pinMode(stripDefaults[index][3],OUTPUT);
+      // Flip the pin on
+      digitalWrite(stripDefaults[index][3],1);
+    }
+
+    // Init the strips
     strips[index] = Adafruit_NeoPixel(stripDefaults[index][0],stripDefaults[index][1], NEO_GRB + NEO_KHZ800);
     strips[index].begin();
     strips[index].setBrightness(maxBrightness);
-    SetRGBPixels(index,offPixel,0);
+    SetRGBPixels(index,systemPalette[stripDefaults[index][2]],0);
   }
 }
 
